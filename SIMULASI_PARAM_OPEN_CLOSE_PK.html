@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HMI SIMULASI PARAM OPEN CLOSE PARKER</title>
+    <meta name="theme-color" content="#0284c7">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Simulasi Parker">
+    <link rel="manifest" href="manifest-simulasi.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/simulasi-192.png">
+    <link rel="apple-touch-icon" href="icons/simulasi-192.png">
+    <style>
+        :root {
+            color-scheme: light dark;
+            --md-bg: #f8fafc;
+            --md-surface: #ffffff;
+            --md-surface-variant: #f1f5f9;
+            --md-border: #cbd5e1;
+            --md-text-primary: #0f172a;
+            --md-text-secondary: #475569;
+            --accent-primary: #0284c7;
+            --accent-success: #16a34a;
+            --accent-warning: #d97706;
+            --accent-danger: #dc2626;
+            --accent-purple: #9333ea;
+            --shadow-elevation: 0 4px 12px rgba(0,0,0,0.06);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --md-bg: #090d16;
+                --md-surface: #111827;
+                --md-surface-variant: #1f2937;
+                --md-border: #374151;
+                --md-text-primary: #f9fafb;
+                --md-text-secondary: #9ca3af;
+                --accent-primary: #38bdf8;
+                --accent-success: #4ade80;
+                --accent-warning: #fbbf24;
+                --accent-danger: #f87171;
+                --accent-purple: #c084fc;
+                --shadow-elevation: 0 4px 16px rgba(0,0,0,0.4);
+            }
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background-color: var(--md-bg); color: var(--md-text-primary); padding: 8px; display: flex; flex-direction: column; gap: 8px; min-height: 100vh; font-size: 13px; }
+
+        .top-dash-sticky { position: sticky; top: 0; z-index: 100; background: var(--md-surface); border: 1px solid var(--md-border); border-radius: 12px; padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; box-shadow: var(--shadow-elevation); }
+        .dash-header-line { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--md-border); padding-bottom: 4px; }
+        .dash-title { font-size: 0.8rem; font-weight: 800; color: var(--accent-primary); letter-spacing: 0.3px; text-transform: uppercase; }
+        .live-pill { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; font-weight: 700; background: rgba(22, 163, 74, 0.12); border: 1px solid var(--accent-success); padding: 2px 8px; border-radius: 20px; color: var(--accent-success); }
+        .dot-pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--accent-success); box-shadow: 0 0 6px var(--accent-success); }
+        .telemetry-compact-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+        .tele-box { background: var(--md-surface-variant); border: 1px solid var(--md-border); border-radius: 8px; padding: 4px 6px; text-align: center; }
+        .tele-lbl { font-size: 0.58rem; color: var(--md-text-secondary); font-weight: 700; text-transform: uppercase; }
+        .tele-num { font-size: 0.95rem; font-weight: 900; font-family: ui-monospace, Consolas, monospace; line-height: 1.1; }
+
+        .alert-container { display: flex; flex-direction: column; gap: 6px; }
+        .alert-badge { display: none; padding: 8px 10px; border-radius: 8px; font-size: 0.72rem; font-weight: 600; line-height: 1.35; box-shadow: var(--shadow-elevation); }
+        .alert-badge.show { display: block; }
+        .bg-red { background: rgba(220, 38, 38, 0.15); border: 1px solid var(--accent-danger); color: var(--accent-danger); }
+        .bg-yellow { background: rgba(217, 119, 6, 0.15); border: 1px solid var(--accent-warning); color: var(--accent-warning); }
+        .bg-purple { background: rgba(147, 51, 234, 0.15); border: 1px solid var(--accent-purple); color: var(--accent-purple); }
+
+        .card-sim { background: var(--md-surface); border: 1px solid var(--md-border); border-radius: 12px; padding: 8px; display: flex; flex-direction: column; gap: 6px; box-shadow: var(--shadow-elevation); transition: transform 0.05s ease; }
+        .card-sim.impact-shake { animation: simShake 0.45s ease-in-out; }
+
+        @keyframes simShake {
+            0% { transform: translate(0, 0); } 15% { transform: translate(-6px, 4px); } 30% { transform: translate(6px, -4px); }
+            45% { transform: translate(-5px, 3px); } 60% { transform: translate(4px, -2px); } 75% { transform: translate(-2px, 1px); } 100% { transform: translate(0, 0); }
+        }
+
+        .sim-header { display: flex; justify-content: space-between; align-items: center; font-size: 0.7rem; font-weight: 700; color: var(--md-text-secondary); }
+        .simulation-container { width: 100%; height: 155px; background: var(--md-surface-variant); border-radius: 8px; overflow: hidden; border: 1px solid var(--md-border); }
+        svg#mouldSVG { width: 100%; height: 100%; }
+
+        .pulse-damage { animation: pulseFlash 0.5s infinite alternate ease-in-out; transform-origin: center; }
+        @keyframes pulseFlash { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0.3; transform: scale(1.4); } }
+
+        .direct-control-bar { background: var(--md-surface); border: 1px solid var(--md-border); border-radius: 12px; padding: 8px; display: flex; flex-direction: column; gap: 6px; box-shadow: var(--shadow-elevation); }
+        .btn-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
+        .btn-direct { padding: 6px 2px; background: var(--md-surface-variant); border: 1px solid var(--md-border); color: var(--md-text-secondary); font-size: 0.65rem; font-weight: 700; border-radius: 6px; cursor: pointer; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px; }
+        .btn-direct.active { background: var(--accent-primary); color: #ffffff; border-color: var(--accent-primary); }
+
+        .action-main-grid { display: grid; grid-template-columns: 1fr 1fr 0.8fr 0.8fr; gap: 6px; }
+        .btn-act { padding: 9px 4px; border-radius: 8px; border: none; font-size: 0.75rem; font-weight: 800; cursor: pointer; text-align: center; display: flex; align-items: center; justify-content: center; gap: 5px; box-shadow: 0 2px 5px rgba(0,0,0,0.15); transition: transform 0.08s ease; }
+        .btn-act:active { transform: scale(0.96); opacity: 0.85; }
+        .btn-run-c { background: var(--accent-primary); color: #fff; }
+        .btn-run-o { background: var(--accent-success); color: #fff; }
+        .btn-rst { background: var(--md-border); color: var(--md-text-primary); }
+        .btn-esp { background: var(--accent-danger); color: #fff; }
+        .btn-icon-svg { width: 14px; height: 14px; fill: currentColor; flex-shrink: 0; }
+
+        .param-section { background: var(--md-surface); border: 1px solid var(--md-border); border-radius: 12px; padding: 8px; display: flex; flex-direction: column; gap: 8px; box-shadow: var(--shadow-elevation); }
+        .tab-bar-mobile { display: flex; background: var(--md-surface-variant); padding: 3px; border-radius: 8px; border: 1px solid var(--md-border); gap: 4px; }
+        .tab-btn { flex: 1; padding: 8px 0; border: none; background: transparent; color: var(--md-text-secondary); font-weight: 800; font-size: 0.75rem; border-radius: 6px; cursor: pointer; text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        .tab-btn.active { background: var(--accent-primary); color: #ffffff; }
+        .tab-btn.tab-open.active { background: var(--accent-success); color: #ffffff; }
+
+        .touch-pos-bar { background: rgba(2, 132, 199, 0.06); border: 1px solid rgba(2, 132, 199, 0.25); border-radius: 8px; padding: 6px 10px; display: flex; justify-content: space-between; align-items: center; }
+        .params-grid-mobile { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+        .card-input-dense { background: var(--md-surface-variant); border: 1px solid var(--md-border); border-radius: 8px; padding: 6px; display: flex; flex-direction: column; gap: 4px; }
+        .input-dense-head { font-size: 0.68rem; font-weight: 800; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--md-border); padding-bottom: 3px; }
+        .stepper-row-mobile { display: flex; justify-content: space-between; align-items: center; gap: 2px; }
+        .lbl-sub-mobile { font-size: 0.62rem; color: var(--md-text-secondary); }
+        .stepper-mini { display: flex; align-items: center; background: var(--md-surface); border: 1px solid var(--md-border); border-radius: 6px; overflow: hidden; }
+        .btn-m { width: 26px; height: 26px; background: var(--md-surface-variant); border: none; color: var(--md-text-primary); font-size: 0.9rem; font-weight: bold; cursor: pointer; }
+        .stepper-mini input { width: 38px; height: 26px; background: transparent; border: none; color: var(--md-text-primary); text-align: center; font-size: 0.75rem; font-weight: 800; outline: none; }
+        .unit-m { font-size: 0.58rem; color: var(--md-text-secondary); padding-right: 4px; }
+
+        .educational-hint-box { font-size: 0.65rem; color: var(--md-text-secondary); background: rgba(2, 132, 199, 0.06); border: 1px solid rgba(2, 132, 199, 0.2); border-radius: 8px; padding: 8px; line-height: 1.4; }
+        .card-chart { background: var(--md-surface); border: 1px solid var(--md-border); border-radius: 12px; padding: 8px; box-shadow: var(--shadow-elevation); }
+        .chart-container { width: 100%; height: 100px; background: var(--md-surface-variant); border-radius: 6px; border: 1px solid var(--md-border); }
+        canvas#graphCanvas { width: 100%; height: 100%; }
+    </style>
+</head>
+<body>
+
+    <!-- TELEMETRY DASHBOARD -->
+    <div class="top-dash-sticky">
+        <div class="dash-header-line">
+            <span class="dash-title">⚡ HMI SIMULASI PARAM OPEN CLOSE PARKER</span>
+            <div class="live-pill" id="statusPill">
+                <div class="dot-pulse" id="statusDot"></div>
+                <span id="statusPillText">READY</span>
+            </div>
+        </div>
+        <div class="telemetry-compact-row">
+            <div class="tele-box">
+                <div class="tele-lbl">ACTUAL POS</div>
+                <div class="tele-num" id="telePos" style="color: var(--accent-primary);">500.0<span style="font-size: 0.6rem;">mm</span></div>
+            </div>
+            <div class="tele-box">
+                <div class="tele-lbl">ACTUAL SPEED</div>
+                <div class="tele-num" id="teleSpeed" style="color: var(--accent-success);">0<span style="font-size: 0.6rem;">mm/s</span></div>
+            </div>
+            <div class="tele-box">
+                <div class="tele-lbl">PRESS PARKER</div>
+                <div class="tele-num" id="telePress" style="color: var(--accent-warning);">0<span style="font-size: 0.6rem;">bar</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- EDUCATIONAL DIAGNOSTIC HINTS & ALERTS -->
+    <div class="alert-container">
+        <div id="alertHierarchyError" class="alert-badge bg-red">⚠️ <strong>HIERARCHY ERROR:</strong> Urutan posisi melompati profile!</div>
+        <div id="alertPrematureHolding" class="alert-badge bg-red">
+            💥 <strong>HOLDING IMPACT COLLISION (MOULD UNTOUCHED):</strong> Selisih S_slow_end ke S_touch &ge; 1.5mm! Mould melayang langsung tereksekusi HOLDING (&sim;<span id="txtHoldPressPeak">75</span> bar)!<br>
+            ⚠️ <strong>EFEK FISIK MOULD:</strong> Benturan keras pada area kontak pinch-off! <u>Cutting edge berisiko tumpul hingga gompal</u> &rarr; Pemotongan terpal parison gagal sempurna &rarr; <strong>AVAL ATAS JADI ALOT / SUSAH DIPOTONG!</strong>
+        </div>
+        <div id="alertCloseOvershoot" class="alert-badge bg-red">
+            💥 <strong>CLOSE IMPACT OVERSHOOT (BYPASSED SLOW):</strong> Jarak S_mid ke S_slow terlalu rapat! Mould menghantam rapat di kecepatan tinggi (<span id="txtCloseBounceVal">2.4</span>mm flex rebound) & Pressure Spike (<span id="txtSpikeVal">145</span> bar)!<br>
+            ⚠️ <strong>EFEK FISIK MOULD:</strong> Area kontak pinch-off terbentur keras! <u>Cutting edge tumpul & gompal</u> &rarr; <strong>AVAL ATAS JADI ALOT / KERAS SAAT DEFLASHING!</strong>
+        </div>
+        <div id="alertOpenOvershoot" class="alert-badge bg-yellow">⚡ <strong>OPEN INERTIA OVERSHOOT:</strong> Jarak S_fast ke S_max terlalu sempit! Inersia hidrolik membuat cetakan mekar bablas!</div>
+        <div id="alertSlowProtect" class="alert-badge bg-red">🚨 <strong>CARRIAGE LOCKOUT ALARM:</strong> S_slow_end &le; S_touch! Carriage dikunci!</div>
+        <div id="alertSteepProfile" class="alert-badge bg-purple">⚡ <strong>STEEP DECEL PROFILE:</strong> Jarak deselerasi &Delta;S sangat sempit!</div>
+    </div>
+
+    <!-- SVG MECHANICAL SIMULATION -->
+    <div class="card-sim" id="cardSimContainer">
+        <div class="sim-header">
+            <span>MECHANICAL SIMULATION (1 CYLINDER + GEARPASS)</span>
+            <span id="simStatusSub" style="color: var(--accent-primary);">Centerline: 0.0mm</span>
+        </div>
+        <div class="simulation-container">
+            <svg id="mouldSVG" viewBox="0 0 800 240">
+                <defs>
+                    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" opacity="0.1" stroke-width="1"/></pattern>
+                    <linearGradient id="parisonGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#10b981" opacity="0.8"/><stop offset="100%" stop-color="#10b981" opacity="0.8"/></linearGradient>
+                    <linearGradient id="platenGrad" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#475569"/><stop offset="100%" stop-color="#334155"/></linearGradient>
+                    <linearGradient id="steelGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#64748b"/><stop offset="100%" stop-color="#94a3b8"/></linearGradient>
+                    <linearGradient id="singleCylGrad" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#1e1b4b"/><stop offset="50%" stop-color="#4338ca"/><stop offset="100%" stop-color="#1e1b4b"/></linearGradient>
+                    <linearGradient id="chromeGrad" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" stop-color="#cbd5e1"/><stop offset="100%" stop-color="#94a3b8"/></linearGradient>
+                </defs>
+                <rect width="100%" height="100%" fill="url(#grid)"/>
+                <line x1="20" y1="25" x2="780" y2="25" stroke="#64748b" stroke-width="6"/>
+                <line x1="20" y1="175" x2="780" y2="175" stroke="#64748b" stroke-width="6"/>
+                <line x1="400" y1="10" x2="400" y2="230" stroke="#94a3b8" stroke-dasharray="3,3"/>
+                <g id="gearpassGroup">
+                    <circle cx="400" cy="202" r="14" fill="#1e293b" stroke="#f59e0b" stroke-width="2"/>
+                    <circle cx="400" cy="202" r="4" fill="#f59e0b"/>
+                    <text x="400" y="228" fill="#f59e0b" font-size="9" font-weight="900" text-anchor="middle">GEARPASS</text>
+                </g>
+                <rect id="rackLeft" x="180" y="191" width="220" height="7" rx="2" fill="#475569" stroke="#94a3b8"/>
+                <rect id="rackRight" x="400" y="206" width="220" height="7" rx="2" fill="#475569" stroke="#94a3b8"/>
+                <rect x="382" y="2" width="36" height="10" rx="2" fill="#475569" stroke="#94a3b8"/>
+                <rect id="parison" x="391" y="12" width="18" height="20" rx="2" fill="url(#parisonGrad)" stroke="#059669"/>
+                <g id="singleCylGroup">
+                    <rect x="15" y="50" width="15" height="100" rx="2" fill="#1e293b" stroke="#475569"/>
+                    <rect id="cylMain" x="30" y="60" width="115" height="80" rx="5" fill="url(#singleCylGrad)" stroke="#a855f7" stroke-width="2"/>
+                    <text x="87" y="105" fill="#fff" font-size="9" font-weight="bold" text-anchor="middle">1 CYLINDER</text>
+                </g>
+                <rect id="rodMain" x="145" y="90" width="35" height="20" rx="2" fill="url(#chromeGrad)" stroke="#334155"/>
+                <g id="leftGroup" transform="translate(0,0)">
+                    <rect x="180" y="35" width="30" height="130" rx="3" fill="url(#platenGrad)" stroke="#475569" stroke-width="1.5"/>
+                    <path id="mouldBlockL" d="M 210,50 L 285,50 L 285,80 L 265,100 L 285,120 L 285,150 L 210,150 Z" fill="url(#steelGrad)" stroke="#475569"/>
+                </g>
+                <g id="rightGroup" transform="translate(0,0)">
+                    <rect x="590" y="35" width="30" height="130" rx="3" fill="url(#platenGrad)" stroke="#475569" stroke-width="1.5"/>
+                    <path id="mouldBlockR" d="M 590,50 L 515,50 L 515,80 L 535,100 L 515,120 L 515,150 L 590,150 Z" fill="url(#steelGrad)" stroke="#475569"/>
+                </g>
+                <line id="gapLineL" x1="285" y1="10" x2="285" y2="180" stroke="#0284c7" stroke-dasharray="2,2"/>
+                <line id="gapLineR" x1="515" y1="10" x2="515" y2="180" stroke="#0284c7" stroke-dasharray="2,2"/>
+
+                <!-- DAMAGE / COLLISION MARKERS AT PINCH-OFF CUTTING EDGE -->
+                <g id="damageZoneGroup" style="display: none;">
+                    <circle cx="400" cy="50" r="14" fill="rgba(220, 38, 38, 0.45)" stroke="#dc2626" stroke-width="2.5" class="pulse-damage"/>
+                    <path d="M 390 40 L 410 60 M 410 40 L 390 60" stroke="#ef4444" stroke-width="2.5"/>
+                    <text x="400" y="32" fill="#dc2626" font-size="8.5" font-weight="900" text-anchor="middle">⚠️ CUTTING EDGE DAMAGE (TUMPUL/GOMPAL)</text>
+                    
+                    <circle cx="400" cy="150" r="14" fill="rgba(220, 38, 38, 0.45)" stroke="#dc2626" stroke-width="2.5" class="pulse-damage"/>
+                    <path d="M 390 140 L 410 160 M 410 140 L 390 160" stroke="#ef4444" stroke-width="2.5"/>
+                    <text x="400" y="174" fill="#dc2626" font-size="8.5" font-weight="900" text-anchor="middle">💥 AVAL ATAS ALOT (HARD TRIMMING)</text>
+                </g>
+            </svg>
+        </div>
+    </div>
+
+    <!-- DIRECT CONTROL BAR -->
+    <div class="direct-control-bar">
+        <div class="btn-grid-4">
+            <button class="btn-direct active" id="btnPosOpen" onclick="setDirectPos('OPEN')"><span>🔓</span> 1. Open Max</button>
+            <button class="btn-direct" id="btnPosFast" onclick="setDirectPos('FAST')"><span>⏩</span> 2. Fast Close</button>
+            <button class="btn-direct" id="btnPosMid" onclick="setDirectPos('MID')"><span>▶️</span> 3. Mid Decel</button>
+            <button class="btn-direct" id="btnPosSlow" onclick="setDirectPos('SLOW')"><span>⏯️</span> 4. Slow End</button>
+        </div>
+        <div class="action-main-grid">
+            <button class="btn-act btn-run-c" onclick="runCloseCycle()"><svg class="btn-icon-svg" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>CLOSE</button>
+            <button class="btn-act btn-run-o" onclick="runOpenCycle()"><svg class="btn-icon-svg" viewBox="0 0 24 24"><path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z"/></svg>OPEN</button>
+            <button class="btn-act btn-rst" onclick="resetToOpen()"><svg class="btn-icon-svg" viewBox="0 0 24 24"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6 0 3.31-2.69 6-6 6-3.31 0-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8c0-4.42-3.58-8-8-8z"/></svg>RESET</button>
+            <button class="btn-act btn-esp" onclick="triggerEStop()"><svg class="btn-icon-svg" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>E-STOP</button>
+        </div>
+    </div>
+
+    <!-- PARAMETER SECTION -->
+    <div class="param-section">
+        <div class="tab-bar-mobile">
+            <button class="tab-btn active" id="tabCloseBtn" onclick="switchTab('CLOSE')">MOULD CLOSE</button>
+            <button class="tab-btn tab-open" id="tabOpenBtn" onclick="switchTab('OPEN')">MOULD OPEN</button>
+        </div>
+        <div class="touch-pos-bar">
+            <div>
+                <span style="font-size: 0.7rem; font-weight: 800; color: var(--accent-primary);">Touch Point (S_touch):</span>
+                <div style="font-size: 0.58rem; color: var(--md-text-secondary);">Depends on physical Mould Size & Spacer</div>
+            </div>
+            <div class="stepper-mini">
+                <button class="btn-m" onclick="stepVal('cPosTouch', -1.0)">-</button>
+                <input type="number" id="cPosTouch" value="10.0" step="0.5">
+                <span class="unit-m">mm</span>
+                <button class="btn-m" onclick="stepVal('cPosTouch', 1.0)">+</button>
+            </div>
+        </div>
+
+        <div id="cardCloseParams">
+            <div class="params-grid-mobile">
+                <div class="card-input-dense" id="boxCloseFast">
+                    <div class="input-dense-head" style="color: var(--accent-primary);"><span>1. FAST CLOSE</span></div>
+                    <div class="stepper-row-mobile"><span class="lbl-sub-mobile">Pos (S_fast):</span><div class="stepper-mini"><button class="btn-m" onclick="stepVal('cPosFast', -5)">-</button><input type="number" id="cPosFast" value="250"><span class="unit-m">mm</span><button class="btn-m" onclick="stepVal('cPosFast', 5)">+</button></div></div>
+                    <div class="stepper-row-mobile"><span class="lbl-sub-mobile">Press:</span><div class="stepper-mini"><button class="btn-m" onclick="stepVal('cPressFast', -5)">-</button><input type="number" id="cPressFast" value="75"><span class="unit-m">bar</span><button class="btn-m" onclick="stepVal('cPressFast', 5)">+</button></div></div>
+                </div>
+                <div class="card-input-dense" id="boxCloseMid">
+                    <div class="input-dense-head" style="color: var(--accent-warning);"><span>2. MID DECEL</span></div>
+                    <div class="stepper-row-mobile"><span class="lbl-sub-mobile">Pos (S_mid):</span><div class="stepper-mini"><button class="btn-m" onclick="stepVal('cPosMid', -5)">-</button><input type="number" id="cPosMid" value="60"><span class="unit-m">mm</span><button class="btn-m" onclick="stepVal('cPosMid', 5)">+</button></div></div>
+                    <div class="stepper-row-mobile"><span class="lbl-sub-mobile">Press:</span><div class="stepper-mini"><button class="btn-m" onclick="stepVal('cPressMid', -5)">-</button><input type="number" id="cPressMid" value="45"><span class="unit-m">bar</span><button class="btn-m" onclick="stepVal('cPressMid', 5)">+</button></div></div>
+                </div>
+                <div class="card-input-dense" id="boxCloseSlow">
+                    <div class="input-dense-head" style="color: var(--accent-warning);"><span>3. SLOW END</span></div>
+                    <div class="stepper-row-mobile"><span class="lbl-sub-mobile" style="font-weight: bold;">S_slow_end:</span><div class="stepper-mini"><button class="btn-m" onclick="stepVal('cPosHoldingStart', -0.5)">-</button><input type="number" id="cPosHoldingStart" value="11.0" step="0.5"><span class="unit-m">mm</span><button class="btn-m" onclick="stepVal('cPosHoldingStart', 0.5)">+</button></div></div>
+                    <div class="stepper-row-mobile"><span class="lbl-sub-mobile">Press:</span><div class="stepper-mini"><button class="btn-m" onclick="stepVal('cPressSlow', -2)">-</button><input type="number" id="cPressSlow" value="18"><span class="unit-m">bar</span><button class="btn-m" onclick="stepVal('cPressSlow', 2)">+</button></div></div>
+                </div>
+                <div class="card-input-dense" id="boxCloseHolding">
+                    <div class="input-dense-head" style="color: var(--accent-danger);"><span>4. HOLDING</span></div>
+                    <div class="stepper-row-mobile"><span class="lbl-sub-mobile">Press:</span><div class="stepper-mini"><button class="btn-m" onclick="stepVal('cPressHold', -5)">-</button><input type="number" id="cPressHold" value="75"><span class="unit-m">bar</span><button class="btn-m" onclick="stepVal('cPressHold', 5)">+</button></div></div>
+                    <div class="stepper-row-mobile"><span class="lbl-sub-mobile">Timer:</span><div class="stepper-mini"><button class="btn-m" onclick="stepVal('cTimeHold', -0.1)">-</button><input type="number" id="cTimeHold" value="1.5" step="0.1"><span class="unit-m">s</span><button class="btn-m" onclick="stepVal('cTimeHold', 0.1)">+</button></div></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="cardOpenParams" style="display:none;">
+            <div class="params-grid-mobile">
+                <div class="card-input-dense" id="boxOpenSlow1">
+                    <div class="input-dense-head" style="color: var(--accent-warning);"><span>1. SLOW RELEASE</span></div>
+                    <div class="stepper-row-mobile"><span class="lbl-sub-mobile">Pos (S_rel):</span><div class="stepper-mini"><button class="btn-m" onclick="stepVal('oPosSlow1', -5)">-</button><input type="number" id="oPosSlow1" value="40"><span class="unit-m">mm</span><button class="btn-m" onclick="stepVal('oPosSlow1', 5)">+</button></div></div>
+                    <div class="stepper-row-mobile"><span class="lbl-sub-mobile">Press:</span><div class="stepper-mini"><button class="btn-m" onclick="stepVal('oPressSlow1', -5)">-</button><input type="number" id="oPressSlow1" value="95"><span class="unit-m">bar</span><button class="btn-m" onclick="stepVal('oPressSlow1', 5)">+</button></div></div>
+                </div>
+                <div class="card-input-dense" id="boxOpenFast">
+                    <div class="input-dense-head" style="color: var(--accent-primary);"><span>2. FAST OPEN</span></div>
+                    <div class="stepper-row-mobile"><span class="lbl-sub-mobile">Pos (S_fast):</span><div class="stepper-mini"><button class="btn-m" onclick="stepVal('oPosFast', -5)">-</button><input type="number" id="oPosFast" value="380"><span class="unit-m">mm</span><button class="btn-m" onclick="stepVal('oPosFast', 5)">+</button></div></div>
+                    <div class="stepper-row-mobile"><span class="lbl-sub-mobile">Press:</span><div class="stepper-mini"><button class="btn-m" onclick="stepVal('oPressFast', -5)">-</button><input type="number" id="oPressFast" value="85"><span class="unit-m">bar</span><button class="btn-m" onclick="stepVal('oPressFast', 5)">+</button></div></div>
+                </div>
+                <div class="card-input-dense" id="boxOpenSlow2">
+                    <div class="input-dense-head" style="color: var(--accent-warning);"><span>3. SLOW DECEL</span></div>
+                    <div class="stepper-row-mobile"><span class="lbl-sub-mobile">Pos Max:</span><div class="stepper-mini"><button class="btn-m" onclick="stepVal('oPosMax', -5)">-</button><input type="number" id="oPosMax" value="500"><span class="unit-m">mm</span><button class="btn-m" onclick="stepVal('oPosMax', 5)">+</button></div></div>
+                    <div class="stepper-row-mobile"><span class="lbl-sub-mobile">Decel Press:</span><div class="stepper-mini"><button class="btn-m" onclick="stepVal('oPressSlow2', -5)">-</button><input type="number" id="oPressSlow2" value="45"><span class="unit-m">bar</span><button class="btn-m" onclick="stepVal('oPressSlow2', 5)">+</button></div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CANVAS GRAPH -->
+    <div class="card-chart">
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.65rem; font-weight: 700; color: var(--md-text-secondary); margin-bottom: 4px;">
+            <span>PARKER VALVE REALTIME GRAPH</span>
+            <span id="slopeDegreeLabel" style="color: var(--accent-purple);">Slope: Normal</span>
+        </div>
+        <div class="chart-container"><canvas id="graphCanvas"></canvas></div>
+    </div>
+
+    <script>
+        let currentMode = 'CLOSE', state = 'OPEN', curPos = 500.0, lastPos = 500.0, curSpeed = 0.0, curPress = 0, holdTimerCount = 0, animId = null, animSpeedFactor = 1.0, hasSystemAlarm = false;
+        let impactBounceOffset = 0, openOvershootOffset = 0, historyData = [];
+        const maxGraphPoints = 140;
+
+        const leftGroup = document.getElementById('leftGroup'), rightGroup = document.getElementById('rightGroup'), mouldBlockL = document.getElementById('mouldBlockL'), mouldBlockR = document.getElementById('mouldBlockR'), cardSimContainer = document.getElementById('cardSimContainer'), damageZoneGroup = document.getElementById('damageZoneGroup');
+        const rodMain = document.getElementById('rodMain'), rackLeft = document.getElementById('rackLeft'), rackRight = document.getElementById('rackRight');
+        const statusDot = document.getElementById('statusDot'), statusPillText = document.getElementById('statusPillText');
+        const alertHierarchyError = document.getElementById('alertHierarchyError'), alertPrematureHolding = document.getElementById('alertPrematureHolding'), alertCloseOvershoot = document.getElementById('alertCloseOvershoot'), alertOpenOvershoot = document.getElementById('alertOpenOvershoot'), alertSlowProtect = document.getElementById('alertSlowProtect'), alertSteepProfile = document.getElementById('alertSteepProfile'), slopeDegreeLabel = document.getElementById('slopeDegreeLabel');
+        const txtHoldPressPeak = document.getElementById('txtHoldPressPeak'), txtCloseBounceVal = document.getElementById('txtCloseBounceVal'), txtSpikeVal = document.getElementById('txtSpikeVal');
+        const telePos = document.getElementById('telePos'), teleSpeed = document.getElementById('teleSpeed'), telePress = document.getElementById('telePress');
+        const cPosTouch = document.getElementById('cPosTouch'), cPosFast = document.getElementById('cPosFast'), cPosMid = document.getElementById('cPosMid'), cPosHoldingStart = document.getElementById('cPosHoldingStart');
+        const cPressFast = document.getElementById('cPressFast'), cPressMid = document.getElementById('cPressMid'), cPressSlow = document.getElementById('cPressSlow'), cPressHold = document.getElementById('cPressHold'), cTimeHold = document.getElementById('cTimeHold');
+        const oPosSlow1 = document.getElementById('oPosSlow1'), oPosFast = document.getElementById('oPosFast'), oPosMax = document.getElementById('oPosMax'), oPressSlow1 = document.getElementById('oPressSlow1'), oPressFast = document.getElementById('oPressFast'), oPressSlow2 = document.getElementById('oPressSlow2');
+        const cardCloseParams = document.getElementById('cardCloseParams'), cardOpenParams = document.getElementById('cardOpenParams');
+        const canvas = document.getElementById('graphCanvas'), ctx = canvas.getContext('2d');
+
+        document.querySelectorAll('input[type="number"]').forEach(input => { input.addEventListener('change', () => { checkSystemValidation(); updateVisuals(); }); });
+        function resizeCanvas() { canvas.width = canvas.parentElement.clientWidth; canvas.height = canvas.parentElement.clientHeight; }
+        window.addEventListener('resize', resizeCanvas); resizeCanvas();
+
+        function triggerHaptic(type) {
+            if ("vibrate" in navigator) {
+                if (type === 'tap') navigator.vibrate(15);
+                else if (type === 'alarm') navigator.vibrate([120, 60, 150]);
+                else if (type === 'slam') navigator.vibrate([200, 50, 200, 50, 300]);
+            }
+        }
+
+        // Dipakai bareng oleh checkSystemValidation() (badge teks) dan loop() (simulasi fisik),
+        // biar threshold-nya gak pernah kepencar/beda antara alert dan animasi.
+        function isCloseOvershoot(sMid, slowEndPos, pMid) {
+            const gap = sMid - slowEndPos;
+            return gap < 25 || (pMid > 50 && gap < 40);
+        }
+        function isOpenOvershoot(oPosMax, oPosFast, pOpenSlow2) {
+            const gap = oPosMax - oPosFast;
+            return pOpenSlow2 > 35 || gap < 40;
+        }
+        function triggerShake(el) {
+            // classList.add doesn't replay a finished CSS animation if the class is already
+            // present, so force a reflow before re-adding it.
+            el.classList.remove('impact-shake');
+            void el.offsetWidth;
+            el.classList.add('impact-shake');
+        }
+
+        function stepVal(id, delta) {
+            triggerHaptic('tap');
+            const input = document.getElementById(id);
+            let val = parseFloat(input.value) + delta;
+            if (id === 'cTimeHold') val = Math.max(0.1, val);
+            else if (id.includes('Press')) val = Math.max(0, Math.min(160, val));
+            else val = Math.max(0, Math.min(600, val));
+            input.value = val % 1 === 0 ? val.toString() : val.toFixed(1);
+            checkSystemValidation(); updateVisuals();
+        }
+
+        function switchTab(mode) {
+            triggerHaptic('tap'); currentMode = mode;
+            document.getElementById('tabCloseBtn').classList.toggle('active', mode === 'CLOSE');
+            document.getElementById('tabOpenBtn').classList.toggle('active', mode === 'OPEN');
+            cardCloseParams.style.display = mode === 'CLOSE' ? 'block' : 'none';
+            cardOpenParams.style.display = mode === 'OPEN' ? 'block' : 'none';
+            checkSystemValidation();
+        }
+
+        function checkSystemValidation() {
+            hasSystemAlarm = false; let hierarchyError = false;
+            const touchVal = parseFloat(cPosTouch.value) || 10, slowEndPos = parseFloat(cPosHoldingStart.value) || 11;
+            const sFast = parseFloat(cPosFast.value) || 250, sMid = parseFloat(cPosMid.value) || 60, pMid = parseFloat(cPressMid.value) || 45, pHold = parseFloat(cPressHold.value) || 75;
+            const sOpenSlow1 = parseFloat(oPosSlow1.value) || 40, sOpenFast = parseFloat(oPosFast.value) || 380, sOpenMax = parseFloat(oPosMax.value) || 500, pOpenSlow2 = parseFloat(oPressSlow2.value) || 45;
+
+            [alertHierarchyError, alertPrematureHolding, alertCloseOvershoot, alertSlowProtect, alertOpenOvershoot, alertSteepProfile].forEach(el => el.classList.remove('show'));
+
+            if (sFast <= sMid || sMid <= slowEndPos || slowEndPos < touchVal) hierarchyError = true;
+            if (sOpenSlow1 <= touchVal || sOpenFast <= sOpenSlow1 || sOpenMax <= sOpenFast) hierarchyError = true;
+            if (hierarchyError) alertHierarchyError.classList.add('show');
+
+            if (slowEndPos <= touchVal) { hasSystemAlarm = true; alertSlowProtect.classList.add('show'); triggerHaptic('alarm'); }
+            const gapSlowToTouch = slowEndPos - touchVal;
+            if (gapSlowToTouch >= 1.5 && !hasSystemAlarm) alertPrematureHolding.classList.add('show');
+
+            const closeDecelGap = sMid - slowEndPos;
+            if (isCloseOvershoot(sMid, slowEndPos, pMid)) alertCloseOvershoot.classList.add('show');
+            const openDecelGap = sOpenMax - sOpenFast;
+            if (isOpenOvershoot(sOpenMax, sOpenFast, pOpenSlow2)) alertOpenOvershoot.classList.add('show');
+
+            if (closeDecelGap < 20 || (sFast - sMid) < 40) {
+                alertSteepProfile.classList.add('show'); slopeDegreeLabel.innerText = "Slope: STEEP ⚠️"; slopeDegreeLabel.style.color = "var(--accent-purple)";
+            } else { slopeDegreeLabel.innerText = "Slope: NORMAL"; slopeDegreeLabel.style.color = "var(--accent-success)"; }
+        }
+
+        function setDirectPos(posType) {
+            triggerHaptic('tap'); if (animId) cancelAnimationFrame(animId);
+            impactBounceOffset = 0; openOvershootOffset = 0; curSpeed = 0.0; damageZoneGroup.style.display = 'none';
+            document.querySelectorAll('.btn-direct').forEach(btn => btn.classList.remove('active'));
+            if (posType === 'OPEN') { curPos = 500.0; lastPos = 500.0; state = 'OPEN'; document.getElementById('btnPosOpen').classList.add('active'); }
+            else if (posType === 'FAST') { curPos = parseFloat(cPosFast.value); lastPos = curPos; state = 'C_FAST'; document.getElementById('btnPosFast').classList.add('active'); }
+            else if (posType === 'MID') { curPos = parseFloat(cPosMid.value); lastPos = curPos; state = 'C_MID'; document.getElementById('btnPosMid').classList.add('active'); }
+            else if (posType === 'SLOW') { curPos = parseFloat(cPosHoldingStart.value); lastPos = curPos; state = 'C_SLOW'; document.getElementById('btnPosSlow').classList.add('active'); }
+            checkSystemValidation(); updateVisuals(); recordGraph();
+        }
+
+        function updateVisuals() {
+            const touchVal = parseFloat(cPosTouch.value) || 10;
+            const travelFrac = (500 - (curPos + openOvershootOffset)) / (500 - touchVal);
+            const leftOffset = travelFrac * 115 + impactBounceOffset, rightOffset = -travelFrac * 115 - impactBounceOffset;
+
+            leftGroup.setAttribute('transform', `translate(${leftOffset}, 0)`);
+            rightGroup.setAttribute('transform', `translate(${rightOffset}, 0)`);
+            rodMain.setAttribute('width', Math.max(10, 180 + leftOffset - 145));
+            rackLeft.setAttribute('x', 180 + leftOffset); rackRight.setAttribute('x', 400 - rightOffset - 220);
+
+            telePos.innerHTML = `${(curPos + openOvershootOffset - impactBounceOffset).toFixed(1)}<span style="font-size: 0.6rem;">mm</span>`;
+            telePress.innerHTML = `${Math.round(curPress)}<span style="font-size: 0.6rem;">bar</span>`;
+            teleSpeed.innerHTML = `${Math.round(curSpeed)}<span style="font-size: 0.6rem;">mm/s</span>`;
+            teleSpeed.style.color = curSpeed > 180 ? "var(--accent-danger)" : (curSpeed > 60 ? "var(--accent-warning)" : "var(--accent-success)");
+        }
+
+        function drawGraph() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--md-border').trim() || '#374151';
+            for (let y = 0; y < canvas.height; y += 25) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke(); }
+            if (historyData.length < 2) return;
+            ctx.beginPath(); ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2;
+            historyData.forEach((d, i) => { const x = (i / maxGraphPoints) * canvas.width, y = canvas.height - (d.pos / 520) * (canvas.height - 15) - 5; i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
+            ctx.stroke();
+            ctx.beginPath(); ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1.5;
+            historyData.forEach((d, i) => { const x = (i / maxGraphPoints) * canvas.width, y = canvas.height - (d.press / 220) * (canvas.height - 15) - 5; i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
+            ctx.stroke();
+        }
+
+        function recordGraph() { historyData.push({ pos: Math.max(0, curPos + openOvershootOffset - impactBounceOffset), press: curPress }); if (historyData.length > maxGraphPoints) historyData.shift(); drawGraph(); }
+        function runCloseCycle() { triggerHaptic('tap'); switchTab('CLOSE'); state = 'C_FAST'; historyData = []; curSpeed = 0.0; damageZoneGroup.style.display = 'none'; if (animId) cancelAnimationFrame(animId); loop(); }
+        function runOpenCycle() { triggerHaptic('tap'); switchTab('OPEN'); state = 'O_SLOW1'; historyData = []; curSpeed = 0.0; damageZoneGroup.style.display = 'none'; if (animId) cancelAnimationFrame(animId); loop(); }
+        function resetToOpen() { triggerHaptic('tap'); state = 'OPEN'; damageZoneGroup.style.display = 'none'; if (animId) cancelAnimationFrame(animId); curPos = 500.0; lastPos = 500.0; curPress = 0; curSpeed = 0.0; checkSystemValidation(); updateVisuals(); recordGraph(); }
+        function triggerEStop() { triggerHaptic('alarm'); state = 'ESTOP'; if (animId) cancelAnimationFrame(animId); curPress = 0; curSpeed = 0.0; updateVisuals(); }
+
+        function loop() {
+            const touchVal = parseFloat(cPosTouch.value) || 10, slowEndPos = parseFloat(cPosHoldingStart.value) || 11, pHold = parseFloat(cPressHold.value) || 75;
+            lastPos = curPos;
+
+            if (state === 'C_FAST') { curPress = parseFloat(cPressFast.value); curPos -= (curPress / 100) * 8.5; if (curPos <= parseFloat(cPosFast.value)) state = 'C_MID'; }
+            else if (state === 'C_MID') {
+                curPress = parseFloat(cPressMid.value); curPos -= (curPress / 100) * 6.5;
+                if (curPos <= parseFloat(cPosMid.value)) {
+                    state = 'C_SLOW';
+                    const sMidVal = parseFloat(cPosMid.value), pMidVal = parseFloat(cPressMid.value);
+                    if (isCloseOvershoot(sMidVal, slowEndPos, pMidVal)) {
+                        const bounceAmt = 2.0 + Math.random() * 1.0;
+                        const spikeVal = Math.round(pMidVal * 1.8 + 40);
+                        impactBounceOffset = bounceAmt; curPress = spikeVal; triggerHaptic('slam');
+                        triggerShake(cardSimContainer); damageZoneGroup.style.display = 'block'; alertCloseOvershoot.classList.add('show');
+                        txtCloseBounceVal.innerText = bounceAmt.toFixed(1); txtSpikeVal.innerText = spikeVal;
+                    }
+                }
+            }
+            else if (state === 'C_SLOW') {
+                curPress = parseFloat(cPressSlow.value); curPos -= (curPress / 100) * 4.0;
+                if (curPos <= slowEndPos) {
+                    state = 'C_HOLDING'; holdTimerCount = 0;
+                    if ((slowEndPos - touchVal) >= 1.5) { 
+                        const peakPress = Math.max(pHold, 110);
+                        impactBounceOffset = 3.5; curPress = peakPress; triggerHaptic('slam');
+                        triggerShake(cardSimContainer); damageZoneGroup.style.display = 'block'; alertPrematureHolding.classList.add('show');
+                        txtHoldPressPeak.innerText = Math.round(peakPress);
+                    }
+                }
+            } else if (state === 'C_HOLDING') {
+                curPress = pHold; curPos = Math.max(touchVal, curPos - 6.0);
+                if (impactBounceOffset > 0) impactBounceOffset = Math.max(0, impactBounceOffset - 0.18);
+                holdTimerCount += 0.03;
+                if (holdTimerCount >= parseFloat(cTimeHold.value)) { curPos = touchVal; curSpeed = 0.0; updateVisuals(); recordGraph(); return; }
+            }
+
+            if (state === 'O_SLOW1') { curPress = parseFloat(oPressSlow1.value); curPos += (curPress / 100) * 4.0; if (curPos >= parseFloat(oPosSlow1.value)) state = 'O_FAST'; }
+            else if (state === 'O_FAST') { curPress = parseFloat(oPressFast.value); curPos += (curPress / 100) * 8.5; if (curPos >= parseFloat(oPosFast.value)) state = 'O_SLOW2'; }
+            else if (state === 'O_SLOW2') {
+                curPress = parseFloat(oPressSlow2.value); curPos += (curPress / 100) * 4.0;
+                const oMaxVal = parseFloat(oPosMax.value), oFastVal = parseFloat(oPosFast.value), pSlow2Val = parseFloat(oPressSlow2.value);
+                if (curPos >= oMaxVal) {
+                    curPos = oMaxVal;
+                    if (isOpenOvershoot(oMaxVal, oFastVal, pSlow2Val)) {
+                        openOvershootOffset = Math.max(3, 6 + (pSlow2Val - 35) * 0.15);
+                        state = 'O_SETTLING'; triggerHaptic('tap'); alertOpenOvershoot.classList.add('show');
+                    } else { curPress = 0; curSpeed = 0.0; updateVisuals(); recordGraph(); return; }
+                }
+            } else if (state === 'O_SETTLING') {
+                curPress = 20;
+                if (openOvershootOffset > 0) openOvershootOffset = Math.max(0, openOvershootOffset - 0.25);
+                if (openOvershootOffset <= 0) { curPress = 0; curSpeed = 0.0; updateVisuals(); recordGraph(); return; }
+            }
+
+            curSpeed = Math.abs(curPos - lastPos) * 35.0;
+            updateVisuals(); recordGraph();
+            if (state !== 'OPEN' && state !== 'ESTOP') animId = requestAnimationFrame(loop);
+        }
+
+        checkSystemValidation(); updateVisuals(); recordGraph();
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(console.error));
+        }
+    </script>
+</body>
+</html>
