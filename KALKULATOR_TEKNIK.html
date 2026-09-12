@@ -540,10 +540,11 @@
     <div id="tab-conv" class="tab-pane">
         <div class="md-card">
             <h2>🔄 Konversi Satuan Industri Cepat</h2>
-            <span class="label-title">Konversi Tekanan (Bar ⇄ PSI ⇄ MPa)</span>
+            <span class="label-title">Konversi Tekanan (Bar ⇄ PSI ⇄ MPa ⇄ kPa)</span>
             <input type="number" id="bar_val" value="100" oninput="convertPressure('bar')" placeholder="Bar">
             <input type="number" id="psi_val" value="1450.4" oninput="convertPressure('psi')" placeholder="PSI">
             <input type="number" id="mpa_val" value="10" oninput="convertPressure('mpa')" placeholder="MPa">
+            <input type="number" id="kpa_val" value="10000" oninput="convertPressure('kpa')" placeholder="kPa">
             <div class="result-container" style="margin-top:4px;">
                 <button class="copy-btn" onclick="copyResult('conv_press_res')" title="Salin">📋</button>
                 <div class="result-box" id="conv_press_res" style="border-left-color: var(--warning);">
@@ -996,17 +997,21 @@
                 bar = parseFloat(document.getElementById('bar_val').value) || 0;
             } else if (source === 'psi') {
                 bar = (parseFloat(document.getElementById('psi_val').value) || 0) / 14.5038;
-            } else {
+            } else if (source === 'mpa') {
                 bar = (parseFloat(document.getElementById('mpa_val').value) || 0) * 10;
+            } else {
+                bar = (parseFloat(document.getElementById('kpa_val').value) || 0) / 100;
             }
             const psi = bar * 14.5038;
             const mpa = bar / 10;
+            const kpa = bar * 100;
 
             if (source !== 'bar') document.getElementById('bar_val').value = bar.toFixed(2);
             if (source !== 'psi') document.getElementById('psi_val').value = psi.toFixed(1);
             if (source !== 'mpa') document.getElementById('mpa_val').value = mpa.toFixed(2);
+            if (source !== 'kpa') document.getElementById('kpa_val').value = kpa.toFixed(1);
 
-            document.getElementById('conv_press_res').innerHTML = `Hasil: <b>${bar.toFixed(2)} Bar</b> = <b>${psi.toFixed(1)} PSI</b> = <b>${mpa.toFixed(2)} MPa</b>`;
+            document.getElementById('conv_press_res').innerHTML = `Hasil: <b>${bar.toFixed(2)} Bar</b> = <b>${psi.toFixed(1)} PSI</b> = <b>${mpa.toFixed(2)} MPa</b> = <b>${kpa.toFixed(1)} kPa</b>`;
         }
 
         function convertForce(source) {
