@@ -7,13 +7,9 @@
     
     <!-- PWA & Mobile Web Meta Tags -->
     <meta name="theme-color" content="#1e3a8a">
-    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="UBS Toolkit">
-    <link rel="manifest" href="manifest-kalkulator.json">
-    <link rel="icon" type="image/png" sizes="192x192" href="icons/kalkulator-192.png">
-    <link rel="apple-touch-icon" href="icons/kalkulator-192.png">
 
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
@@ -271,7 +267,8 @@
     <!-- TAB NAVIGATION -->
     <div class="tab-nav">
         <button class="tab-btn active" onclick="switchTab(event, 'tab-oee')">📊 OEE</button>
-        <button class="tab-btn" onclick="switchTab(event, 'tab-suhu')">🌡️ Suhu</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-raw')">🧮 RAW Output</button>
+        <button class="tab-btn" onclick="switchTab(event, 'tab-suhu')">🌡️ Temp Barel</button>
         <button class="tab-btn" onclick="switchTab(event, 'tab-inj')">🎛️ Injeksi</button>
         <button class="tab-btn" onclick="switchTab(event, 'tab-ulir')">🔩 Ulir</button>
         <button class="tab-btn" onclick="switchTab(event, 'tab-watt')">⚡ Watt</button>
@@ -301,18 +298,10 @@
                 <button onclick="adjCycle(0.5)">+</button>
             </div>
             <span class="label-title">Jumlah Cavity</span>
-            <div class="chip-group">
-                <input type="radio" name="cavity" id="c1" value="1" onchange="toggleCavityCustom()"><label for="c1">1</label>
-                <input type="radio" name="cavity" id="c2" value="2" onchange="toggleCavityCustom()"><label for="c2">2</label>
-                <input type="radio" name="cavity" id="c4" value="4" checked onchange="toggleCavityCustom()"><label for="c4">4</label>
-                <input type="radio" name="cavity" id="c8" value="8" onchange="toggleCavityCustom()"><label for="c8">8</label>
-                <input type="radio" name="cavity" id="c12" value="12" onchange="toggleCavityCustom()"><label for="c12">12</label>
-                <input type="radio" name="cavity" id="c24" value="24" onchange="toggleCavityCustom()"><label for="c24">24</label>
-                <input type="radio" name="cavity" id="c_cust" value="custom" onchange="toggleCavityCustom()"><label for="c_cust">Custom</label>
-            </div>
-            <div id="cavity_custom_box" style="display: none; margin-bottom: 12px;">
-                <label class="label-title">Masukkan Cavity Custom</label>
-                <input type="number" id="custom_cavity_val" value="16" min="1" max="128" oninput="calcOEE()">
+            <div class="stepper">
+                <button onclick="adjCavityOEE(-1)">-</button>
+                <span class="value" id="cavity_oee_val">4</span>
+                <button onclick="adjCavityOEE(1)">+</button>
             </div>
             <div class="slider-group">
                 <label><span>Rata-rata Downtime / Gangguan</span> <span id="down_lbl" style="color:var(--error)">30 Menit</span></label>
@@ -322,11 +311,6 @@
                 <label><span>Estimasi Reject (NG)</span> <span id="rej_lbl" style="color:var(--warning)">2%</span></label>
                 <input type="range" id="rej_slider" min="0" max="15" value="2" step="1" oninput="updateOEEUI()">
             </div>
-            <div class="form-group" style="margin-bottom: 12px;">
-                <label class="label-title">Jumlah Output Aktual (Pcs) — Opsional</label>
-                <input type="number" id="actual_output_input" placeholder="Kosongkan = proyeksi teoritis saja" min="0" oninput="calcOEE()" style="width:100%; height:34px; border-radius:6px; border:1px solid var(--border); background:var(--bg); color:var(--text-main); padding:6px 10px; font-family:monospace; font-size:14px; box-sizing:border-box;">
-                <span style="font-size:10px; color:var(--text-muted);">Isi ini kalau mau OEE riil (pakai Performance factor). Kalau kosong, hasil di bawah cuma proyeksi teoritis (Performance diasumsikan 100%).</span>
-            </div>
             <div class="result-container">
                 <button class="copy-btn" onclick="copyResult('oee_res')" title="Salin">📋</button>
                 <div class="result-box" id="oee_res"></div>
@@ -335,22 +319,64 @@
         </div>
     </div>
 
+    <!-- TAB 1B: RAW OUTPUT (Teoritis, Bebas) -->
+    <div id="tab-raw" class="tab-pane">
+        <div class="md-card">
+            <h2>🧮 Kalkulator RAW Output Mesin</h2>
+            <span class="label-title" style="display:block; margin-bottom:10px; color:var(--text-muted); font-size:11px;">*Output teoritis murni (100% jalan) — tanpa potongan downtime/reject. Untuk estimasi realistis, gunakan tab OEE.</span>
+            <span class="label-title">Rentang Waktu</span>
+            <div class="chip-group">
+                <input type="radio" name="ro_time" id="rt1" value="480" checked onchange="calcRawOutput()"><label for="rt1">8 Jam (Shift)</label>
+                <input type="radio" name="ro_time" id="rt2" value="1440" onchange="calcRawOutput()"><label for="rt2">24 Jam (Hari)</label>
+                <input type="radio" name="ro_time" id="rt3" value="10080" onchange="calcRawOutput()"><label for="rt3">1 Minggu</label>
+                <input type="radio" name="ro_time" id="rt4" value="43200" onchange="calcRawOutput()"><label for="rt4">1 Bulan (30 Hari)</label>
+            </div>
+            <span class="label-title">Cycle Time Mesin (Detik)</span>
+            <div class="stepper">
+                <button onclick="adjCycleRO(-0.5)">-</button>
+                <span class="value" id="cycle_ro_val">12.0</span>
+                <button onclick="adjCycleRO(0.5)">+</button>
+            </div>
+            <span class="label-title">Jumlah Cavity</span>
+            <div class="stepper">
+                <button onclick="adjCavityRO(-1)">-</button>
+                <span class="value" id="cavity_ro_val">4</span>
+                <button onclick="adjCavityRO(1)">+</button>
+            </div>
+            <div class="result-container">
+                <button class="copy-btn" onclick="copyResult('raw_res')" title="Salin">📋</button>
+                <div class="result-box" id="raw_res" style="border-left-color: var(--primary);"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- TAB 2: SUHU MATERIAL -->
     <div id="tab-suhu" class="tab-pane">
         <div class="md-card">
-            <h2>🌡️ Acuan Suhu Material (IMM & EBM)</h2>
+            <h2>🌡️ Rekomendasi Temp Barel (IMM & EBM)</h2>
             <span class="label-title">Proses Mesin</span>
             <div class="chip-group">
-                <input type="radio" name="mat_proc" id="p1" value="IMM" checked onchange="updateMat()"><label for="p1">IMM (Injeksi)</label>
-                <input type="radio" name="mat_proc" id="p2" value="EBM" onchange="updateMat()"><label for="p2">EBM (Blowing)</label>
+                <input type="radio" name="mat_proc" id="p1" value="IMM" checked onchange="onProsesChange()"><label for="p1">IMM (Injeksi)</label>
+                <input type="radio" name="mat_proc" id="p2" value="EBM" onchange="onProsesChange()"><label for="p2">EBM (Blowing)</label>
             </div>
-            <span class="label-title">Material Plastik</span>
+            <span class="label-title">Tipe Referensi</span>
             <div class="chip-group">
-                <input type="radio" name="mat_type" id="m1" value="HDPE" checked onchange="updateMat()"><label for="m1">HDPE</label>
-                <input type="radio" name="mat_type" id="m2" value="PP" onchange="updateMat()"><label for="m2">PP</label>
-                <input type="radio" name="mat_type" id="m3" value="PET" onchange="updateMat()"><label for="m3">PET</label>
-                <input type="radio" name="mat_type" id="m4" value="ABS" onchange="updateMat()"><label for="m4">ABS</label>
-                <input type="radio" name="mat_type" id="m5" value="PVC" onchange="updateMat()"><label for="m5">PVC</label>
+                <input type="radio" name="mat_ref" id="ref_generic" value="generic" checked onchange="onRefTypeChange()"><label for="ref_generic">Acuan Umum</label>
+                <input type="radio" name="mat_ref" id="ref_grade" value="grade" onchange="onRefTypeChange()"><label for="ref_grade">Grade Spesifik</label>
+            </div>
+            <div id="mat_generic_box">
+                <span class="label-title">Material Plastik</span>
+                <div class="chip-group">
+                    <input type="radio" name="mat_type" id="m1" value="HDPE" checked onchange="updateMat()"><label for="m1">HDPE</label>
+                    <input type="radio" name="mat_type" id="m2" value="PP" onchange="updateMat()"><label for="m2">PP</label>
+                    <input type="radio" name="mat_type" id="m3" value="PET" onchange="updateMat()"><label for="m3">PET</label>
+                    <input type="radio" name="mat_type" id="m4" value="ABS" onchange="updateMat()"><label for="m4">ABS</label>
+                    <input type="radio" name="mat_type" id="m5" value="PVC" onchange="updateMat()"><label for="m5">PVC</label>
+                </div>
+            </div>
+            <div id="mat_grade_box" style="display:none;">
+                <span class="label-title">Pilih Grade</span>
+                <div class="chip-group" id="mat_grade_chips"></div>
             </div>
             <div class="result-container">
                 <button class="copy-btn" onclick="copyResult('mat_res')" title="Salin">📋</button>
@@ -390,7 +416,12 @@
                 <input type="radio" name="thread_size" id="th4" value="21.0" onchange="calcThread()"><label for="th4">~21.0 mm (1/2")</label>
                 <input type="radio" name="thread_size" id="th5" value="26.4" onchange="calcThread()"><label for="th5">~26.4 mm (3/4")</label>
                 <input type="radio" name="thread_size" id="th6" value="33.2" onchange="calcThread()"><label for="th6">~33.2 mm (1")</label>
+                <input type="radio" name="thread_size" id="th7" value="41.9" onchange="calcThread()"><label for="th7">~41.9 mm (1 1/4")</label>
+                <input type="radio" name="thread_size" id="th8" value="47.8" onchange="calcThread()"><label for="th8">~47.8 mm (1 1/2")</label>
+                <input type="radio" name="thread_size" id="th9" value="59.6" onchange="calcThread()"><label for="th9">~59.6 mm (2")</label>
             </div>
+            <span class="label-title" style="margin-top:12px;">Atau: Isi Manual Diameter Luar Terukur (mm)</span>
+            <input type="number" id="thread_manual_od" placeholder="Cth: 42.3" step="0.1" oninput="searchThreadManual()">
             <div class="result-container">
                 <button class="copy-btn" onclick="copyResult('thread_res')" title="Salin">📋</button>
                 <div class="result-box" id="thread_res" style="border-left-color: var(--success);"></div>
@@ -417,6 +448,8 @@
                 <label><span>Atur Nilai Ohm</span> <span id="ohm_slider_lbl">16.1 Ω</span></label>
                 <input type="range" id="ohm_slider" min="1" max="150" value="16.1" step="0.5" oninput="updateOhmSlider()">
             </div>
+            <span class="label-title">Atau: Isi Manual Nilai Ohm</span>
+            <input type="number" id="ohm_manual" placeholder="Cth: 18.5" step="0.1" oninput="setManualOhm()">
             <div class="result-container">
                 <button class="copy-btn" onclick="copyResult('power_res')" title="Salin">📋</button>
                 <div class="result-box" id="power_res" style="border-left-color: var(--warning);"></div>
@@ -507,18 +540,34 @@
     <div id="tab-conv" class="tab-pane">
         <div class="md-card">
             <h2>🔄 Konversi Satuan Industri Cepat</h2>
-            <span class="label-title">Konversi Tekanan (Bar ⇄ PSI)</span>
+            <span class="label-title">Konversi Tekanan (Bar ⇄ PSI ⇄ MPa)</span>
             <input type="number" id="bar_val" value="100" oninput="convertPressure('bar')" placeholder="Bar">
             <input type="number" id="psi_val" value="1450.4" oninput="convertPressure('psi')" placeholder="PSI">
+            <input type="number" id="mpa_val" value="10" oninput="convertPressure('mpa')" placeholder="MPa">
+            <div class="result-container" style="margin-top:4px;">
+                <button class="copy-btn" onclick="copyResult('conv_press_res')" title="Salin">📋</button>
+                <div class="result-box" id="conv_press_res" style="border-left-color: var(--warning);">
+                    Status Konversi Tekanan Aktif.
+                </div>
+            </div>
 
-            <span class="label-title" style="margin-top:12px;">Konversi Suhu (°C ⇄ °F)</span>
+            <span class="label-title" style="margin-top:16px;">Konversi Gaya (Ton-force ⇄ kN)</span>
+            <input type="number" id="ton_val" value="1" oninput="convertForce('ton')" placeholder="Ton">
+            <input type="number" id="kn_val" value="9.81" oninput="convertForce('kn')" placeholder="kN">
+            <div class="result-container" style="margin-top:4px;">
+                <button class="copy-btn" onclick="copyResult('conv_force_res')" title="Salin">📋</button>
+                <div class="result-box" id="conv_force_res" style="border-left-color: var(--primary);">
+                    Status Konversi Gaya Aktif. <span style="font-size:10px;">*Ton-force ke kN pakai faktor gravitasi 9.80665, sama seperti di tab Tonase.</span>
+                </div>
+            </div>
+
+            <span class="label-title" style="margin-top:16px;">Konversi Suhu (°C ⇄ °F)</span>
             <input type="number" id="c_val" value="220" oninput="convertTemp('c')" placeholder="°C">
             <input type="number" id="f_val" value="428" oninput="convertTemp('f')" placeholder="°F">
-
-            <div class="result-container" style="margin-top:10px;">
+            <div class="result-container" style="margin-top:4px;">
                 <button class="copy-btn" onclick="copyResult('conv_res')" title="Salin">📋</button>
                 <div class="result-box" id="conv_res" style="border-left-color: var(--success);">
-                    Status Konversi Aktif. Ubah nilai di atas untuk menghitung otomatis.
+                    Status Konversi Suhu Aktif.
                 </div>
             </div>
         </div>
@@ -580,16 +629,12 @@
             calcOEE();
         }
 
-        function toggleCavityCustom() {
-            const isCustom = document.getElementById('c_cust').checked;
-            document.getElementById('cavity_custom_box').style.display = isCustom ? 'block' : 'none';
+        let currentCavityOEE = 4;
+        function adjCavityOEE(val) {
+            currentCavityOEE += val;
+            if (currentCavityOEE < 1) currentCavityOEE = 1;
+            document.getElementById('cavity_oee_val').innerText = currentCavityOEE;
             calcOEE();
-        }
-
-        function getSelectedCavity() {
-            const selected = document.querySelector('input[name="cavity"]:checked').value;
-            if(selected === 'custom') return parseInt(document.getElementById('custom_cavity_val').value) || 1;
-            return parseInt(selected);
         }
 
         function updateOEEUI() {
@@ -600,60 +645,63 @@
 
         function calcOEE() {
             const timeMinutes = parseInt(document.querySelector('input[name="oee_time"]:checked').value);
-            const cavity = getSelectedCavity();
+            const cavity = currentCavityOEE;
             const downPerShift = parseInt(document.getElementById('down_slider').value);
             const rejPct = parseInt(document.getElementById('rej_slider').value) / 100;
-            const actualOutputRaw = parseFloat(document.getElementById('actual_output_input').value);
-            const hasActualData = actualOutputRaw > 0;
-
+            
             // Konversi proporsi downtime sesuai durasi (asumsi downtime harian proporsional)
             const shiftsCount = timeMinutes / 480; // 480 menit = 8 jam
             const totalDown = downPerShift * shiftsCount;
+
             const runTime = timeMinutes - totalDown;
+            const actualTotalProduced = Math.max(0, Math.floor(((runTime * 60) / currentCycle) * cavity)); 
+            const rejectPcs = Math.floor(actualTotalProduced * rejPct);
+            const goodPcs = actualTotalProduced - rejectPcs;
+            
             const A = timeMinutes > 0 ? Math.max(0, runTime / timeMinutes) : 0;
+            const Q = actualTotalProduced > 0 ? goodPcs / actualTotalProduced : 0;
+            const OEE = A * 1.0 * Q * 100;
 
-            let actualTotalProduced, rejectPcs, goodPcs, P, Q, OEE, modeLabel, modeNote, modeColor;
-
-            if (hasActualData) {
-                // MODE OEE RIIL: Performance dihitung dari perbandingan cycle time ideal vs waktu jalan riil
-                actualTotalProduced = Math.floor(actualOutputRaw);
-                rejectPcs = Math.floor(actualTotalProduced * rejPct);
-                goodPcs = actualTotalProduced - rejectPcs;
-                const idealRunTimeMinutes = (actualTotalProduced * currentCycle) / (cavity * 60);
-                P = runTime > 0 ? idealRunTimeMinutes / runTime : 0;
-                Q = actualTotalProduced > 0 ? goodPcs / actualTotalProduced : 0;
-                OEE = A * P * Q * 100;
-                modeLabel = "OEE AKTUAL (dari data output riil)";
-                modeColor = "var(--success)";
-                modeNote = `Performance: ${(P*100).toFixed(1)}% (cycle time ideal ${currentCycle}s vs waktu jalan riil).`;
-                if (P > 1.05) modeNote += ` ⚠️ Performance >100% — cek lagi cycle time ideal / downtime, kemungkinan asumsinya kurang pas.`;
-            } else {
-                // MODE PROYEKSI: output dihitung dari cycle time input sendiri, jadi Performance otomatis 100% (bukan data riil)
-                actualTotalProduced = Math.max(0, Math.floor(((runTime * 60) / currentCycle) * cavity));
-                rejectPcs = Math.floor(actualTotalProduced * rejPct);
-                goodPcs = actualTotalProduced - rejectPcs;
-                P = 1.0;
-                Q = actualTotalProduced > 0 ? goodPcs / actualTotalProduced : 0;
-                OEE = A * P * Q * 100;
-                modeLabel = "PROYEKSI TEORITIS (bukan OEE riil)";
-                modeColor = "var(--warning)";
-                modeNote = `⚠️ Performance diasumsikan 100% karena output dihitung dari cycle time, bukan data produksi aktual. Isi "Jumlah Output Aktual" di atas untuk OEE riil.`;
-            }
-
-            const resText = `[${hasActualData ? 'AKTUAL' : 'PROYEKSI'}] Durasi: ${timeMinutes/60} Jam | Bagus: ${goodPcs.toLocaleString()} Pcs | Reject: ${rejectPcs.toLocaleString()} Pcs | OEE: ${OEE.toFixed(1)}%`;
-
+            const resText = `Durasi: ${timeMinutes/60} Jam | Bagus: ${goodPcs.toLocaleString()} Pcs | Reject: ${rejectPcs.toLocaleString()} Pcs | OEE: ${OEE.toFixed(1)}%`;
+            
             document.getElementById('oee_res').innerHTML = `
-                <strong style="color:${modeColor};">${modeLabel}</strong><br><br>
                 Akumulasi Produk Bagus: <span class="highlight">${goodPcs.toLocaleString()} Pcs</span><br>
                 Akumulasi Reject: <span style="color:var(--error)">${rejectPcs.toLocaleString()} Pcs</span><br><br>
                 <strong>Skor OEE (${timeMinutes/60} Jam):</strong><br>
-                Availability: ${(A*100).toFixed(1)}% | Performance: ${(P*100).toFixed(1)}% | Quality: ${(Q*100).toFixed(1)}%<br>
+                Availability: ${(A*100).toFixed(1)}% | Quality: ${(Q*100).toFixed(1)}%<br>
                 <span style="font-size:15px; color:var(--primary); margin-top:4px; display:block;">OEE Final: <strong>${OEE.toFixed(1)}%</strong></span>
-                <span style="font-size:10px; color:var(--text-muted); display:block; margin-top:6px; line-height:1.4;">${modeNote}</span>
             `;
-
+            
             localStorage.setItem('ubs_last_oee', resText);
             document.getElementById('hist_oee').innerText = "Riwayat Terakhir: " + resText;
+        }
+
+        // === RAW OUTPUT (Teoritis, Bebas) ===
+        let currentCycleRO = 12.0;
+        let currentCavityRO = 4;
+
+        function adjCycleRO(val) {
+            currentCycleRO += val;
+            if (currentCycleRO < 1) currentCycleRO = 1.0;
+            document.getElementById('cycle_ro_val').innerText = currentCycleRO.toFixed(1);
+            calcRawOutput();
+        }
+
+        function adjCavityRO(val) {
+            currentCavityRO += val;
+            if (currentCavityRO < 1) currentCavityRO = 1;
+            document.getElementById('cavity_ro_val').innerText = currentCavityRO;
+            calcRawOutput();
+        }
+
+        function calcRawOutput() {
+            const timeMinutes = parseInt(document.querySelector('input[name="ro_time"]:checked').value);
+            const totalOutput = Math.floor(((timeMinutes * 60) / currentCycleRO) * currentCavityRO);
+            document.getElementById('raw_res').innerHTML = `
+                Durasi: <b>${(timeMinutes/60).toLocaleString()} Jam</b> | CT: <b>${currentCycleRO.toFixed(1)} Detik</b> | Cavity: <b>${currentCavityRO}</b><br><br>
+                Estimasi Output RAW (100% Jalan, Tanpa Downtime/Reject):<br>
+                <span class="highlight" style="font-size:18px;">${totalOutput.toLocaleString()} Pcs</span>
+            `;
         }
 
         const matData = {
@@ -673,15 +721,89 @@
             }
         };
 
-        function updateMat() {
+        // Data grade spesifik dari TDS yang dikirim user (dicek satu-satu, dipisah IMM/EBM)
+        const gradeData = {
+            IMM: {
+                "Trilene BI5.0GN": { material: "PP", melt: "220°C - 240°C (Melt Temp)", source: "TDS Trilene / Chandra Asri" },
+                "Titanvene HD5218EA": { material: "HDPE", melt: "200°C - 240°C", source: "TDS Titan Petrokimia Nusantara" },
+                "InnoPlus HD1010J": { material: "HDPE", melt: "190°C - 230°C", source: "TDS GC InnoPlus" },
+                "InnoPlus HD1100J": { material: "HDPE", melt: "Rear/Mid: 165°C-190°C &nbsp;|&nbsp; Nozzle: 180°C-195°C", source: "IDES Prospector / PTT Chemical" },
+                "Trilene BI5.0GA": { material: "PP", melt: null, source: "Material Data Center (Trilene / Chandra Asri)" },
+                "Topilene J640N": { material: "PP", melt: null, source: "TDS Hyosung Vina Chemicals" }
+            },
+            EBM: {
+                "Marlex HXM 50100": { material: "HDPE", melt: null, source: "TDS Marlex (Chevron Phillips)" },
+                "Titanvene HD5401GA": { material: "HDPE", melt: null, source: "TDS Titan Petrokimia Nusantara" },
+                "InnoPlus HD6600B": { material: "HDPE", melt: null, source: "TDS GC InnoPlus" }
+            }
+        };
+
+        function populateGradeChips() {
             const proc = document.querySelector('input[name="mat_proc"]:checked').value;
-            const type = document.querySelector('input[name="mat_type"]:checked').value;
-            const d = matData[proc][type];
-            document.getElementById('mat_res').innerHTML = `
-                Suhu Barrel: <span style="font-weight:700; color:var(--primary);">${d.b}</span><br>
-                Suhu ${proc==='IMM'?'Mold':'Die Head'}: <span style="font-weight:700; color:var(--primary);">${d.m}</span><br><br>
-                <span style="font-size:11px; color:var(--text-muted);">*Note: ${d.n}</span>
-            `;
+            const grades = gradeData[proc];
+            const container = document.getElementById('mat_grade_chips');
+            let html = '';
+            let i = 0;
+            for (const gradeName in grades) {
+                i++;
+                const id = 'grade_' + proc + '_' + i;
+                const checked = i === 1 ? 'checked' : '';
+                html += `<input type="radio" name="mat_grade" id="${id}" value="${gradeName}" ${checked} onchange="updateMat()"><label for="${id}">${gradeName}</label>`;
+            }
+            container.innerHTML = html;
+        }
+
+        function onProsesChange() {
+            const refType = document.querySelector('input[name="mat_ref"]:checked').value;
+            if (refType === 'grade') populateGradeChips();
+            updateMat();
+        }
+
+        function onRefTypeChange() {
+            const refType = document.querySelector('input[name="mat_ref"]:checked').value;
+            document.getElementById('mat_generic_box').style.display = refType === 'generic' ? 'block' : 'none';
+            document.getElementById('mat_grade_box').style.display = refType === 'grade' ? 'block' : 'none';
+            if (refType === 'grade') populateGradeChips();
+            updateMat();
+        }
+
+        function updateMat() {
+            const refType = document.querySelector('input[name="mat_ref"]:checked').value;
+            const proc = document.querySelector('input[name="mat_proc"]:checked').value;
+
+            if (refType === 'generic') {
+                const type = document.querySelector('input[name="mat_type"]:checked').value;
+                const d = matData[proc][type];
+                document.getElementById('mat_res').innerHTML = `
+                    Suhu Barrel: <span style="font-weight:700; color:var(--primary);">${d.b}</span><br>
+                    Suhu ${proc==='IMM'?'Mold':'Die Head'}: <span style="font-weight:700; color:var(--primary);">${d.m}</span><br><br>
+                    <span style="font-size:11px; color:var(--text-muted);">*Note: ${d.n}</span>
+                `;
+                return;
+            }
+
+            const gradeSel = document.querySelector('input[name="mat_grade"]:checked');
+            if (!gradeSel) return;
+            const gradeName = gradeSel.value;
+            const g = gradeData[proc][gradeName];
+
+            if (g.melt) {
+                document.getElementById('mat_res').innerHTML = `
+                    Grade: <b>${gradeName}</b> (${g.material})<br>
+                    Suhu Proses: <span style="font-weight:700; color:var(--primary);">${g.melt}</span><br><br>
+                    <span style="font-size:11px; color:var(--text-muted);">*Sumber: ${g.source}</span>
+                `;
+            } else {
+                const generic = matData[proc][g.material];
+                document.getElementById('mat_res').innerHTML = `
+                    Grade: <b>${gradeName}</b> (${g.material})<br>
+                    <span style="color:var(--warning); font-weight:700;">Data suhu proses belum tersedia di TDS ini.</span><br><br>
+                    Acuan Umum ${g.material} (${proc}) sebagai fallback:<br>
+                    Suhu Barrel: <span style="font-weight:700;">${generic.b}</span><br>
+                    Suhu ${proc==='IMM'?'Mold':'Die Head'}: <span style="font-weight:700;">${generic.m}</span><br><br>
+                    <span style="font-size:11px; color:var(--text-muted);">*Sumber grade: ${g.source}. Update entri ini kalau sudah dapat TDS dengan data suhu proses lengkap.</span>
+                `;
+            }
         }
 
         const injectionProfiles = {
@@ -711,10 +833,14 @@
             "16.7": { name: "3/8 Inch (G 3/8 atau BSPT 3/8)", tpi: "19 TPI", use: "Jalur angin/hidrolik menengah." },
             "21.0": { name: "1/2 Inch (G 1/2 atau BSPT 1/2)", tpi: "14 TPI", use: "Jalur air pendingin (chiller) / oli besar." },
             "26.4": { name: "3/4 Inch (G 3/4 atau BSPT 3/4)", tpi: "14 TPI", use: "Jalur suplai air/oli bervolume tinggi." },
-            "33.2": { name: "1 Inch (G 1 atau BSPT 1)", tpi: "11 TPI", use: "Manifold utama pneumatik / hidrolik." }
+            "33.2": { name: "1 Inch (G 1 atau BSPT 1)", tpi: "11 TPI", use: "Manifold utama pneumatik / hidrolik." },
+            "41.9": { name: "1 1/4 Inch (G 1 1/4 atau BSPT 1 1/4)", tpi: "11 TPI", use: "Manifold hidrolik besar / suplai chiller kapasitas tinggi." },
+            "47.8": { name: "1 1/2 Inch (G 1 1/2 atau BSPT 1 1/2)", tpi: "11 TPI", use: "Jalur suplai utama chiller / kompresor sentral." },
+            "59.6": { name: "2 Inch (G 2 atau BSPT 2)", tpi: "11 TPI", use: "Header utama distribusi air/angin pabrik." }
         };
 
         function calcThread() {
+            document.getElementById('thread_manual_od').value = '';
             const val = document.querySelector('input[name="thread_size"]:checked').value;
             const info = threadInfo[val];
             document.getElementById('thread_res').innerHTML = `
@@ -725,6 +851,26 @@
             `;
         }
 
+        function searchThreadManual() {
+            const val = parseFloat(document.getElementById('thread_manual_od').value);
+            if (!val || val <= 0) return;
+            document.querySelectorAll('input[name="thread_size"]').forEach(r => r.checked = false);
+
+            let nearestKey = null, nearestDiff = Infinity;
+            for (const key in threadInfo) {
+                const diff = Math.abs(parseFloat(key) - val);
+                if (diff < nearestDiff) { nearestDiff = diff; nearestKey = key; }
+            }
+            const info = threadInfo[nearestKey];
+            document.getElementById('thread_res').innerHTML = `
+                Diameter Luar Terukur: <b>${val} mm</b><br>
+                Ukuran Terdekat: <span class="highlight" style="font-size:15px;">${info.name}</span><br>
+                Selisih dari Nominal: <b>${nearestDiff.toFixed(2)} mm</b> | Kerapatan: <strong>${info.tpi}</strong><br><br>
+                <span style="font-size:11px; color:var(--text-muted);"><strong>Aplikasi:</strong> ${info.use}</span><br>
+                <span style="font-size:11px; color:var(--warning);">*Verifikasi fisik dengan pitch gauge bila selisih cukup besar. Gunakan Teflon tape untuk ulir tapered (BSPT/NPT).</span>
+            `;
+        }
+
         let currentOhm = 16.1;
         function adjOhm(val) {
             currentOhm += val;
@@ -732,12 +878,24 @@
             if(currentOhm > 150) currentOhm = 150;
             document.getElementById('ohm_val').innerText = currentOhm.toFixed(1);
             document.getElementById('ohm_slider').value = currentOhm;
+            document.getElementById('ohm_manual').value = '';
             calcPower();
         }
 
         function updateOhmSlider() {
             currentOhm = parseFloat(document.getElementById('ohm_slider').value);
             document.getElementById('ohm_val').innerText = currentOhm.toFixed(1);
+            document.getElementById('ohm_manual').value = '';
+            calcPower();
+        }
+
+        function setManualOhm() {
+            const val = parseFloat(document.getElementById('ohm_manual').value);
+            if (!val || val <= 0) return;
+            currentOhm = val;
+            document.getElementById('ohm_val').innerText = currentOhm.toFixed(1);
+            const sliderMax = parseFloat(document.getElementById('ohm_slider').max);
+            document.getElementById('ohm_slider').value = Math.min(currentOhm, sliderMax);
             calcPower();
         }
 
@@ -746,15 +904,11 @@
             const ohm = currentOhm;
             const powerWatt = (volt * volt) / ohm;
             const currentAmp = volt / ohm;
-            let phaseNote = '';
-            if (volt === 380) {
-                phaseNote = `<br><span style="font-size:10px; color:var(--warning);">⚠️ Rumus ini asumsi 1 beban resistif nyambung langsung ke 380V (P=V²/R). Kalau ini beban 3 fasa (Y/Delta), arus per line-nya beda rumus — cek ke wiring/nameplate asli, jangan andalkan angka ini buat 3 fasa.</span>`;
-            }
             document.getElementById('power_res').innerHTML = `
                 Kalkulasi Kelistrikan:<br>
                 - Tegangan: <b>${volt}V</b> | Resistansi: <b>${ohm.toFixed(1)} Ω</b><br>
                 - Arus Mengalir: <b>${currentAmp.toFixed(2)} Ampere</b><br><br>
-                Daya Output (Watt): <span class="highlight" style="font-size:18px;">${powerWatt.toFixed(0)} Watt</span>${phaseNote}
+                Daya Output (Watt): <span class="highlight" style="font-size:18px;">${powerWatt.toFixed(0)} Watt</span>
             `;
         }
 
@@ -774,11 +928,11 @@
             const inrush = amp * 1.25;
             const finalAmp = t > 40 ? inrush * 1.3 : inrush; 
             const sizes = [10, 15, 25, 40, 60, 80, 100];
-            const rec = sizes.find(s => s >= finalAmp) > 100 ? ">100" : (sizes.find(s => s >= finalAmp) || "100");
+            const matched = sizes.find(s => s >= finalAmp);
+            const rec = matched !== undefined ? matched : ">100";
 
             let html = `Arus Murni: ${amp.toFixed(1)} A<br>`;
             if(t > 40) html += `<span style="color:var(--error); font-size:11px;">Penalti Derating Suhu Aktif (+30%)</span><br>`;
-            if(v === 380) html += `<span style="color:var(--warning); font-size:10px;">⚠️ Asumsi beban resistif langsung ke 380V. Kalau heater ini beban 3 fasa (Y/Delta), arus per fasa beda rumus — verifikasi ke nameplate heater sebelum eksekusi beli SSR.</span><br>`;
             html += `<br>Rekomendasi SSR:<br><span class="highlight" style="font-size:20px;">${rec} Ampere</span>`;
             document.getElementById('ssr_res').innerHTML = html;
         }
@@ -836,18 +990,38 @@
             `;
         }
 
-        function convertPressure(type) {
-            if (type === 'bar') {
-                const bar = parseFloat(document.getElementById('bar_val').value) || 0;
-                const psi = bar * 14.5038;
-                document.getElementById('psi_val').value = psi.toFixed(1);
-                document.getElementById('conv_res').innerHTML = `Hasil: <b>${bar} Bar</b> = <b>${psi.toFixed(1)} PSI</b>`;
+        function convertPressure(source) {
+            let bar;
+            if (source === 'bar') {
+                bar = parseFloat(document.getElementById('bar_val').value) || 0;
+            } else if (source === 'psi') {
+                bar = (parseFloat(document.getElementById('psi_val').value) || 0) / 14.5038;
             } else {
-                const psi = parseFloat(document.getElementById('psi_val').value) || 0;
-                const bar = psi / 14.5038;
-                document.getElementById('bar_val').value = bar.toFixed(1);
-                document.getElementById('conv_res').innerHTML = `Hasil: <b>${psi} PSI</b> = <b>${bar.toFixed(1)} Bar</b>`;
+                bar = (parseFloat(document.getElementById('mpa_val').value) || 0) * 10;
             }
+            const psi = bar * 14.5038;
+            const mpa = bar / 10;
+
+            if (source !== 'bar') document.getElementById('bar_val').value = bar.toFixed(2);
+            if (source !== 'psi') document.getElementById('psi_val').value = psi.toFixed(1);
+            if (source !== 'mpa') document.getElementById('mpa_val').value = mpa.toFixed(2);
+
+            document.getElementById('conv_press_res').innerHTML = `Hasil: <b>${bar.toFixed(2)} Bar</b> = <b>${psi.toFixed(1)} PSI</b> = <b>${mpa.toFixed(2)} MPa</b>`;
+        }
+
+        function convertForce(source) {
+            let ton;
+            if (source === 'ton') {
+                ton = parseFloat(document.getElementById('ton_val').value) || 0;
+            } else {
+                ton = (parseFloat(document.getElementById('kn_val').value) || 0) / 9.80665;
+            }
+            const kn = ton * 9.80665;
+
+            if (source !== 'ton') document.getElementById('ton_val').value = ton.toFixed(3);
+            if (source !== 'kn') document.getElementById('kn_val').value = kn.toFixed(2);
+
+            document.getElementById('conv_force_res').innerHTML = `Hasil: <b>${ton.toFixed(3)} Ton</b> = <b>${kn.toFixed(2)} kN</b>`;
         }
 
         function convertTemp(type) {
@@ -916,11 +1090,7 @@
         });
 
         // Initialize all modules on load
-        calcOEE(); updateMat(); updateInjectionProfile(); calcThread(); calcPower(); calcSSR(); calcInteractiveClamp(); calcShot(); updateTroubleshoot(); updateWiki();
-
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(console.error));
-        }
+        calcOEE(); calcRawOutput(); updateMat(); updateInjectionProfile(); calcThread(); calcPower(); calcSSR(); calcInteractiveClamp(); calcShot(); updateTroubleshoot(); updateWiki();
     </script>
 </body>
 </html>
