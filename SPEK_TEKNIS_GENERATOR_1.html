@@ -4,28 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Generator Spesifikasi Teknis - Material Design</title>
-    <!-- Google Fonts: Inter & Material Symbols -->
+    <!-- Google Fonts: IBM Plex Sans & Material Symbols -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
         :root {
-            /* Kembali ke warna biru agak pudar/gelap khas awal (Navy Slate) */
-            --md-sys-color-primary: #2c3e50;
+            /* Diselaraskan ke house style UBS Mekanik (Hub & Portal Laporan Harian) */
+            --md-sys-color-primary: #35588a;
             --md-sys-color-on-primary: #ffffff;
-            --md-sys-color-primary-container: #e2e8f0;
-            --md-sys-color-surface: #f4f6f8;
+            --md-sys-color-primary-container: #eaeff5;
+            --md-sys-color-surface: #FAFAF8;
             --md-sys-color-surface-container: #ffffff;
-            --md-sys-color-on-surface: #1a1c1e;
-            --md-sys-color-outline: #7f8c8d;
-            --md-sys-color-outline-variant: #bdc3c7;
-            --color-urgent: #c0392b;
-            --color-urgent-bg: #fdecea;
-            --color-normal: #2e7d32;
-            --color-normal-bg: #eaf6ec;
+            --md-sys-color-on-surface: #1e2422;
+            --md-sys-color-outline: #5f5e5a;
+            --md-sys-color-outline-variant: #e1ded2;
+            --color-urgent: #a3402f;
+            --color-urgent-bg: #FBEAEA;
+            --color-normal: #0f6e56;
+            --color-normal-bg: #e5f3ee;
             --radius-small: 8px;
             --radius-medium: 12px;
             --radius-large: 16px;
@@ -33,7 +33,11 @@
 
         * {
             box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
+            font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+        }
+
+        .material-symbols-outlined {
+            font-family: 'Material Symbols Outlined';
         }
 
         body {
@@ -113,7 +117,7 @@
             outline: none;
             background: transparent;
             transition: border-color 0.2s;
-            font-family: 'Inter', sans-serif;
+            font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
         }
         .form-group input[type="text"]:focus,
         .form-group select:focus,
@@ -157,8 +161,8 @@
             transition: background 0.2s, box-shadow 0.2s;
         }
         button:hover {
-            background: #1a252f;
-            box-shadow: 0 4px 8px rgba(44,62,80,0.2);
+            background: #263f66;
+            box-shadow: 0 4px 8px rgba(53,88,138,0.2);
         }
 
         /* Area Preview */
@@ -167,7 +171,7 @@
             display: flex;
             justify-content: center;
             overflow-y: auto;
-            background: #cbd4db;
+            background: #edf0f2;
             border-radius: var(--radius-large);
             padding: 20px;
         }
@@ -178,7 +182,7 @@
             background: white;
             padding: 15mm 20mm;
             box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-            color: #111;
+            color: #1e2422;
             font-size: 10pt;
             margin: 0 auto;
             border-radius: 4px;
@@ -187,11 +191,11 @@
         /* Elemen Dokumen A4 */
         .doc-header { border-bottom: 2px solid var(--md-sys-color-primary); padding-bottom: 8px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-end; }
         .doc-title { font-size: 16pt; font-weight: 700; color: var(--md-sys-color-primary); text-transform: uppercase; letter-spacing: 0.5px; }
-        .doc-company { text-align: right; font-size: 9pt; color: #555; }
+        .doc-company { text-align: right; font-size: 9pt; color: #5f5e5a; }
 
         .info-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
         .info-table th, .info-table td { border: 1px solid var(--md-sys-color-outline-variant); padding: 8px 10px; text-align: left; font-size: 9pt; }
-        .info-table th { background-color: var(--md-sys-color-primary-container); width: 25%; font-weight: 600; color: #2c3e50; }
+        .info-table th { background-color: var(--md-sys-color-primary-container); width: 25%; font-weight: 600; color: var(--md-sys-color-primary); }
 
         .urgency-badge {
             display: inline-block;
@@ -210,9 +214,9 @@
         .section-title { background-color: var(--md-sys-color-primary); color: #ffffff; padding: 6px 12px; font-weight: 600; margin-bottom: 12px; font-size: 10pt; border-radius: 4px; }
 
         .images-container { display: flex; justify-content: center; gap: 12px; margin-bottom: 16px; }
-        .images-container img { max-width: 48%; max-height: 180px; object-fit: contain; border: 1px solid #e5e7eb; border-radius: 4px; display: none; }
+        .images-container img { max-width: 48%; max-height: 180px; object-fit: contain; border: 1px solid #e1ded2; border-radius: 4px; display: none; }
         .specs-img-container { text-align: center; margin-bottom: 16px; }
-        .specs-img-container img { max-width: 100%; max-height: 220px; object-fit: contain; border: 1px solid #e5e7eb; border-radius: 4px; display: none; }
+        .specs-img-container img { max-width: 100%; max-height: 220px; object-fit: contain; border: 1px solid #e1ded2; border-radius: 4px; display: none; }
 
         /* Responsif HP */
         @media screen and (max-width: 768px) {
@@ -347,7 +351,7 @@
             <div class="doc-header">
                 <div>
                     <div class="doc-title">Spesifikasi Teknis</div>
-                    <div style="font-size: 9pt; font-weight: 500; color: #555; margin-top: 2px;">Departemen Mekanik</div>
+                    <div style="font-size: 9pt; font-weight: 500; color: #5f5e5a; margin-top: 2px;">Departemen Mekanik</div>
                 </div>
                 <div class="doc-company">
                     <strong>PT Usaha Bersama Sukses</strong><br>
