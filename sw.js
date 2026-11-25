@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ubs-toolkit-v1';
+const CACHE_NAME = 'ubs-toolkit-v2';
 const ASSETS_TO_CACHE = [
   './KALKULATOR_TEKNIK.html',
   './SPEK_TEKNIS_GENERATOR_1.html',
@@ -11,7 +11,15 @@ const ASSETS_TO_CACHE = [
   './icons/spek-192.png',
   './icons/spek-512.png',
   './icons/simulasi-192.png',
-  './icons/simulasi-512.png'
+  './icons/simulasi-512.png',
+  './kalkulator/style.css',
+  './kalkulator/calc.js',
+  './kalkulator/app.js',
+  './kalkulator/logo-64.png',
+  './kalkulator/fonts/ibm-plex-sans-latin-400-normal.woff2',
+  './kalkulator/fonts/ibm-plex-sans-latin-500-normal.woff2',
+  './kalkulator/fonts/ibm-plex-sans-latin-600-normal.woff2',
+  './kalkulator/fonts/ibm-plex-sans-latin-700-normal.woff2'
 ];
 
 self.addEventListener('install', (event) => {
