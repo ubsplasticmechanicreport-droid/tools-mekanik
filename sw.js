@@ -11,15 +11,7 @@ const ASSETS_TO_CACHE = [
   './icons/spek-192.png',
   './icons/spek-512.png',
   './icons/simulasi-192.png',
-  './icons/simulasi-512.png',
-  './kalkulator/style.css',
-  './kalkulator/calc.js',
-  './kalkulator/app.js',
-  './kalkulator/logo-64.png',
-  './kalkulator/fonts/ibm-plex-sans-latin-400-normal.woff2',
-  './kalkulator/fonts/ibm-plex-sans-latin-500-normal.woff2',
-  './kalkulator/fonts/ibm-plex-sans-latin-600-normal.woff2',
-  './kalkulator/fonts/ibm-plex-sans-latin-700-normal.woff2'
+  './icons/simulasi-512.png'
 ];
 
 self.addEventListener('install', (event) => {
